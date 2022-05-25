@@ -33,7 +33,7 @@ async def _quotly_api_(e):
         d = d.replace(hex_to_name(color) if g == "hex" else color, "")
     else:
         color = "#1b1429"
-    photo = True if "p" in d else False
+    photo = "p" in d
     messages = []
     num = [int(x) for x in d.split() if x.isdigit()]
     num = num[0] if num else None
@@ -84,37 +84,30 @@ async def _quotly_api_(e):
                 "type": "group",
                 "name": _name if c[-1] != _id else "",
             }
-            if len(msgs) == 1:
-                if _x.reply_to and "r" in d:
-                    reply = await _x.get_reply_message()
-                    if isinstance(reply.sender, types.Channel):
-                        _r = {
-                            "chatId": e.chat_id,
-                            "first_name": reply.chat.title,
-                            "last_name": "",
-                            "username": reply.chat.username,
-                            "text": reply.text,
-                            "name": reply.chat.title,
-                        }
-                    elif reply.sender:
-                        name = reply.sender.first_name
-                        name = (
-                            name + " " + reply.sender.last_name
-                            if reply.sender.last_name
-                            else name
-                        )
-                        if reply.fwd_from and reply.fwd_from.from_name:
-                            _name = reply.fwd_from.from_name
-                        _r = {
-                            "chatId": e.chat_id,
-                            "first_name": reply.sender.first_name,
-                            "last_name": "reply.sender.last_name",
-                            "username": reply.sender.username,
-                            "text": reply.text,
-                            "name": name,
-                        }
-                    else:
-                        _r = {}
+            if len(msgs) == 1 and _x.reply_to and "r" in d:
+                reply = await _x.get_reply_message()
+                if isinstance(reply.sender, types.Channel):
+                    _r = {
+                        "chatId": e.chat_id,
+                        "first_name": reply.chat.title,
+                        "last_name": "",
+                        "username": reply.chat.username,
+                        "text": reply.text,
+                        "name": reply.chat.title,
+                    }
+                elif reply.sender:
+                    name = reply.sender.first_name
+                    name = f"{name} {reply.sender.last_name}" if reply.sender.last_name else name
+                    if reply.fwd_from and reply.fwd_from.from_name:
+                        _name = reply.fwd_from.from_name
+                    _r = {
+                        "chatId": e.chat_id,
+                        "first_name": reply.sender.first_name,
+                        "last_name": "reply.sender.last_name",
+                        "username": reply.sender.username,
+                        "text": reply.text,
+                        "name": name,
+                    }
                 else:
                     _r = {}
             else:
@@ -156,7 +149,7 @@ async def _quotly_api_(e):
                         "replyMessage": _r,
                     }
                 )
-            elif media:
+            else:
                 messages.append(
                     {
                         "chatId": e.chat_id,
@@ -181,7 +174,7 @@ async def _quotly_api_(e):
         json=post_data,
     )
     if get_qrate(e.chat_id):
-        cd = str(e.id) + "|" + str(0) + "|" + str(0)
+        cd = f"{str(e.id)}|0|0"
         buttons = buttons = Button.inline("👍", data=f"upq_{cd}"), Button.inline(
             "👎", data=f"doq_{cd}"
         )
@@ -202,7 +195,7 @@ async def _quotly_api_(e):
                 ],
             )
     except Exception as ep:
-        await e.reply("error: " + str(ep))
+        await e.reply(f"error: {str(ep)}")
 
 
 def get_entites(x):
@@ -277,11 +270,11 @@ async def quotly_upvote(e):
         qr[x][1].remove(e.sender_id)
         qr[x][0].append(e.sender_id)
         await e.answer("you 👍 this")
-    elif e.sender_id not in ya[0]:
+    else:
         y += 1
         qr[x][0].append(e.sender_id)
         await e.answer("you 👍 this")
-    cd = "{}|{}|{}".format(x, y, z)
+    cd = f"{x}|{y}|{z}"
     if y == 0:
         y = ""
     if z == 0:
@@ -313,11 +306,11 @@ async def quotly_downvote(e):
         qr[x][0].remove(e.sender_id)
         qr[x][1].append(e.sender_id)
         await e.answer("you 👎 this")
-    elif e.sender_id not in ya[1]:
+    else:
         z += 1
         qr[x][1].append(e.sender_id)
         await e.answer("you 👎 this")
-    cd = "{}|{}|{}".format(x, y, z)
+    cd = f"{x}|{y}|{z}"
     if y == 0:
         y = ""
     if z == 0:
@@ -335,7 +328,7 @@ async def qtop_q(e):
     await e.reply(
         "**Top group quotes:**",
         buttons=Button.switch_inline(
-            "Open top", "top:{}".format(e.chat_id), same_peer=True
+            "Open top", f"top:{e.chat_id}", same_peer=True
         ),
     )
 
@@ -351,7 +344,7 @@ async def qtop_cb_(e):
     n = 0
     if get_qrate(e.chat_id):
         qr[e.id] = [[], []]
-        cd = str(e.id) + "|" + str(0) + "|" + str(0)
+        cd = f"{str(e.id)}|0|0"
         xe = True
     for _x in q:
         n += 1
@@ -382,7 +375,7 @@ async def qrand_s_(e):
     c, xe = random.choice(q), False
     if get_qrate(e.chat_id):
         qr[e.id] = [[], []]
-        cd = str(e.id) + "|" + str(0) + "|" + str(0)
+        cd = f"{str(e.id)}|0|0"
         xe = True
     await e.reply(
         file=types.InputDocument(c[0], c[1], c[2]),

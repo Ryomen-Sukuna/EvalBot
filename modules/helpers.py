@@ -74,13 +74,10 @@ async def HasRight(chat_id, user_id, right):
     return False
 
 async def getSender(e: telethon.events.NewMessage.Event):
-    if e.sender != None:
-        return e.sender
+    if e.sender is None:
+        return e.sender_chat if e.sender_chat != None else None
     else:
-        if e.sender_chat != None:
-            return e.sender_chat
-        else:
-            return None
+        return e.sender
 
 def sizeof_fmt(num, suffix="B"):
     for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
@@ -95,6 +92,4 @@ async def bash(code):
         *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
     )
     stdout, stderr = await process.communicate()
-    result = str(stdout.decode().strip()) \
-        + str(stderr.decode().strip())
-    return result
+    return str(stdout.decode().strip()) + str(stderr.decode().strip())
