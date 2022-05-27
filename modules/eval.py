@@ -89,11 +89,24 @@ async def _request(e):
         url = args[1]
         args = args[2:]
     if not url.startswith("http"):
-        url = f"http://{url}"
-    method = next((m.upper() for m in METHODS if m.lower() in args), "GET")
-    data = args[args.index('-d') + 1] if '-d' in args else None
-    headers = args[args.index('-h') + 1] if '-h' in args else None
-    timeout = int(args[args.index('-t') + 1]) if '-t' in args else 10
+        url = "http://{}".format(url)
+    method = "GET"    
+    for m in METHODS:
+        if m.lower() in args:
+            method = m.upper()
+            break    
+    if '-d' in args:
+        data = args[args.index('-d') + 1]
+    else:
+        data = None
+    if '-h' in args:
+        headers = args[args.index('-h') + 1]
+    else:
+        headers = None
+    if '-t' in args:
+        timeout = int(args[args.index('-t') + 1])
+    else:
+        timeout = 10
     try:
         r = requests.request(method, url, data=data, headers=headers, timeout=timeout)
     except requests.exceptions.ConnectionError:
@@ -103,7 +116,7 @@ async def _request(e):
     except requests.exceptions.RequestException:
         return await e.reply("Invalid request.")
     except Exception as ex:
-        return await e.reply(f"Unknown error.{str(ex)}")
+        return await e.reply("Unknown error." + str(ex))
     if r.status_code == 200:
         resp = "**SUCCESS**\n\n{}".format(
             r.text.replace("`", "") if r.text else r.content
