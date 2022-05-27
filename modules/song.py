@@ -51,10 +51,9 @@ async def download_song(e):
     except (IndexError, KeyError, TypeError):
         return await e.reply("No song result found for your query!")
     axe = await e.reply(
-        "Preparing to upload **{}** by {}".format(
-            v.get("title"), v.get("channel").get("name") or "Channel"
-        )
+        f'Preparing to upload **{v.get("title")}** by {v.get("channel").get("name") or "Channel"}'
     )
+
     duration = int(v["duration"].split(":")[0]) * 60 + \
         int(v["duration"].split(":")[1])
     if duration > 3600:
@@ -95,10 +94,9 @@ async def download_video(e):
     except (IndexError, KeyError, TypeError):
         return await e.reply("No video result found for your query!")
     axe = await e.reply(
-        "Preparing to upload Video **{}** by {}".format(
-            v.get("title"), v.get("channel").get("name") or "Channel"
-        )
+        f'Preparing to upload Video **{v.get("title")}** by {v.get("channel").get("name") or "Channel"}'
     )
+
     duration = int(v["duration"].split(":")[0]) * 60 + \
         int(v["duration"].split(":")[1])
     if duration > 3600:
@@ -127,18 +125,16 @@ async def _stream_platforma(e):
         q = e.text.split(None, maxsplit=1)[1]
     except IndexError:
         return await e.reply("No query given!")
-    r = requests.get("https://api.roseloverx.tk/stream?q={}".format(quote(q)))
+    r = requests.get(f"https://api.roseloverx.tk/stream?q={quote(q)}")
     try:
         r = r.json()
     except:
         return await e.reply("ErrorJsonDecoder.")
-    src = "Streaming sites for **{}**:".format(q)
+    src = f"Streaming sites for **{q}**:"
     buttons = []
-    s = 0
     if not r["data"]:
         return await e.reply(src+"\nNot available on any OTT.")
     for x in r["data"]:
-        s += 1
         p = (f'({x.get("price")})' if "stream" not in x.get(
             "price") else "") if x.get("price") else ""
         buttons.append([telethon.Button.url(x.get("name") + p, x.get("url"))])
@@ -148,7 +144,7 @@ async def _stream_platforma(e):
 @command(pattern='compress')
 async def _compress_vid(e):
     v = await e.get_reply_message()
-    if not v or v.video == None:
+    if not v or v.video is None:
         await e.reply('`No video found to compress!`\nConverts video To h265 codec')
         return
     vd = await v.download_media()
@@ -157,5 +153,10 @@ async def _compress_vid(e):
     await bash(cmd)
     size = os.stat(f'compressed-{vd}').st_size
     comp_size = sizeof_fmt(size)
-    await e.respond('Time: ' + str(time.time() - t) + f's\nFileName: `compressed-{vd}`' + f'\n**{sizeof_fmt(v.file.size)}** --> **{comp_size}**', file='compressed-' + vd)
+    await e.respond(
+        f'Time: {str(time.time() - t)}'
+        + f's\nFileName: `compressed-{vd}`'
+        + f'\n**{sizeof_fmt(v.file.size)}** --> **{comp_size}**',
+        file=f'compressed-{vd}',
+    )
     
