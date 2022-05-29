@@ -5,7 +5,7 @@ import traceback
 
 import requests
 
-from .helpers import auth, command
+from .helpers import auth, command, get_user
 
 
 @command(pattern="eval")
@@ -135,3 +135,47 @@ async def _request(e):
             await e.reply(file=file)
     else:
         await e.reply(resp)
+
+
+@command(pattern="ext")
+async def _ext(e):
+    try:
+        ext = e.text.split(" ", 1)[1]
+    except IndexError:
+        return await e.reply("No extension provided.")
+    if ext.startswith("."):
+        ext = ext[1:]
+    URL = "https://api.roseloverx.tk/fileinfo/{}".format(ext)
+    r = requests.get(URL)
+    if r.status_code == 200:
+        response = f"""
+        **Extension:** `{ext}`
+        **Description:** `{r.json()['description']}`
+        """
+        image = r.json().get("icon")
+        await e.reply(response, image=image)
+    else:
+        await e.reply("No extension found.")
+
+
+@command(pattern="info")
+async def _info(e):
+    if not e.is_reply and len(e.text.split()) == 1:
+        user = e.sender
+    else:
+        user, _ = await get_user(e)
+    if not user:
+        return await e.reply("No user found.")
+    USER_INFO = (
+        "**USER INFO**\n"
+        "`Name:` **{}**\n"
+        "`ID:` **{}**\n"
+        "`Username:` **{}**\n"
+        "`Bot:` **{}**\n"
+    ).format(
+        user.first_name,
+        user.id,
+        user.username,
+        user.bot,
+    )
+    await e.reply(USER_INFO)
