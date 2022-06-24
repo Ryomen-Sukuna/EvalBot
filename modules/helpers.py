@@ -6,12 +6,21 @@ import telethon
 from ._config import OWNER_ID, bot
 from ._db import AUTH
 
+ERRORS = []
+
 
 def command(**args):
     args["pattern"] = "^(?i)[?/!]" + args["pattern"] + "(?: |$|@ValerinaRobot)(.*)"
 
     def decorator(func):
-        bot.add_event_handler(func, telethon.events.NewMessage(**args))
+        async def wrapper(ev):
+            try:
+                await func(ev)
+            except Exception as e:
+                ERRORS.append(e)
+                await ev.reply(str(e))
+
+        bot.add_event_handler(wrapper, telethon.events.NewMessage(**args))
         return func
 
     return decorator
@@ -19,7 +28,13 @@ def command(**args):
 
 def InlineQuery(**args):
     def decorator(func):
-        bot.add_event_handler(func, telethon.events.InlineQuery(**args))
+        async def wrapper(ev):
+            try:
+                await func(ev)
+            except Exception as e:
+                ERRORS.append(e)
+
+        bot.add_event_handler(wrapper, telethon.events.InlineQuery(**args))
         return func
 
     return decorator
@@ -27,6 +42,13 @@ def InlineQuery(**args):
 
 def Callback(**args):
     def decorator(func):
+        async def wrapper(ev):
+            try:
+                await func(ev)
+            except Exception as e:
+                ERRORS.append(e)
+                await ev.answer(str(e), alert=True)
+
         bot.add_event_handler(func, telethon.events.CallbackQuery(**args))
         return func
 
@@ -115,3 +137,34 @@ async def bash(code):
     stdout, stderr = await process.communicate()
     result = str(stdout.decode().strip()) + str(stderr.decode().strip())
     return result
+
+
+async def get_reply_image(v):
+    if not v.reply_to:
+        return None
+    r = await v.get_reply_message()
+    if not r.media:
+        return None
+    if isinstance(r.media, telethon.tl.types.MessageMediaDocument):
+        if r.media.document.mime_type.split("/")[0] == "image":
+            return r
+        else:
+            return None
+    elif isinstance(r.media, telethon.tl.types.MessageMediaPhoto):
+        return r
+    else:
+        return None
+
+
+async def get_reply_gif(e):
+    r = await e.get_reply_message()
+    if not r.gif:
+        return None
+    return r
+
+
+async def get_reply_video(e):
+    r = await e.get_reply_message()
+    if not r.video:
+        return None
+    return r

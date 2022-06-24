@@ -4,11 +4,14 @@ import sys
 import traceback
 
 import requests
+from telethon import events
 
-from .helpers import auth, command, get_user
+from ._config import bot
+from .helpers import ERRORS, auth, command, get_user
 
 
 @command(pattern="eval")
+@bot.on(events.MessageEdited(pattern="^(?i)[!?.]eval (.*?)"))
 @auth
 async def _eval(e):
     try:
@@ -49,8 +52,11 @@ async def aexec(code, event):
             + "\n p = print"
             + "\n message = event = e"
             + "\n r = reply = await event.get_reply_message()"
-            + "\n chat = event.chat_id"
+            + "\n chat = event"
             + "\n from pprint import pprint"
+            + "\n from requests import get, post"
+            + "\n from bs4 import BeautifulSoup as bs"
+            + "\n from .netflix import setup_browser, send_photo, xpath"
             + "\n pp = pprint"
         )
         + "".join(f"\n {l}" for l in code.split("\n"))
@@ -156,6 +162,14 @@ async def _ext(e):
         await e.reply(response, image=image)
     else:
         await e.reply("No extension found.")
+
+
+@command(pattern="err")
+async def _err(e):
+    if len(ERRORS) == 0:
+        return await e.reply("No errors found.")
+    else:
+        await e.reply("\n".join(ERRORS))
 
 
 @command(pattern="info")
